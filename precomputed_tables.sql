@@ -28,12 +28,18 @@ CREATE TABLE pc_Big (
   pid INT, -- id of product
   use_prod_amt INT -- amount * price at the time of sale
 );
-
+/*
 INSERT INTO pc_Big
 SELECT users.id, products.id, sales.quantity * sales.price AS amt
 FROM users, products, sales
 WHERE users.id = sales.uid
 AND sales.pid = products.id ;
+*/
+INSERT INTO pc_Big
+SELECT users.id, products.id, COALESCE(sales.quantity * sales.price, 0) AS amt
+FROM (users LEFT OUTER JOIN sales ON users.id = sales.uid) 
+     RIGHT OUTER JOIN products ON sales.pid = products.id ;
+
 
 
 -- state, products
@@ -42,25 +48,43 @@ CREATE TABLE pc_StateProd (
   prod_id INT,
   st_prod_amt INT
 );
-
+/*
 INSERT INTO pc_StateProd
 SELECT users.state, pc_Big.pid, SUM(pc_Big.use_prod_amt)
 FROM users, pc_Big
 WHERE users.id = pc_Big.uid
 GROUP BY users.state, pc_Big.pid;
+*/
+INSERT INTO pc_StateProd
+SELECT users.state, products.id, COALESCE(sum(sales.quantity * sales.price), 0)
+(FROM users
+LEFT OUTER JOIN sales ON users.id = sales.uid)
+RIGHT OUTER JOIN products ON sales.pid = products.id
+GROUP BY users.state, products.id;
+
 
 -- users, categories
 CREATE TABLE pc_UseCat (
   uid INT,
+  name TEXT,
   cid INT,
   use_cat_amt INT
 );
-
+/*
 INSERT INTO pc_UseCat
 SELECT pc_Big.uid, products.cid, SUM(pc_Big.use_prod_amt)
 FROM products, pc_Big
 WHERE products.id = pc_Big.pid
 GROUP BY pc_Big.uid, products.cid;
+*/
+INSERT INTO pc_UseCat
+SELECT users.id, users.name, products.cid, 
+       COALESCE(sum(sales.quantity * sales.price), 0)
+((FROM users
+LEFT OUTER JOIN sales ON users.id = sales.uid)
+RIGHT OUTER JOIN products ON sales.pid = products.id)
+GROUP BY users.id, users.name, products.cid;
+
 
 -- state, categories
 CREATE TABLE pc_StateCat (
@@ -86,7 +110,7 @@ INSERT INTO pc_Users
 SELECT pc_UseCat.uid, SUM(pc_UseCat.use_cat_amt)
 FROM pc_UseCat
 GROUP BY pc_UseCat.uid -- sum over categories
-LIMIT 20;
+;
 
 -- new temp for row header names and sums
 CREATE TABLE pc_Users_Limit (
@@ -100,19 +124,30 @@ SELECT pc_UseCat.uid, users.name, SUM(pc_UseCat.use_cat_amt) AS use_amt
 FROM pc_UseCat, users
 WHERE pc_UseCat.uid = users.id
 GROUP BY pc_UseCat.uid, users.name -- sum over categories
-ORDER BY sum DESC LIMIT 20;
+ORDER BY use_amt DESC LIMIT 20;
 
 
 -- products
 CREATE TABLE pc_Prod (
   pid INT,
+  name TEXT,
   prod_amt INT
 );
 
+
+/*
 INSERT INTO pc_Prod
 SELECT pc_StateProd.prod_id, SUM(pc_StateProd.st_prod_amt)
 FROM pc_StateProd
 GROUP BY pc_StateProd.prod_id; -- sum over states
+*/
+INSERT INTO pc_Prod
+SELECT products.id, products.name, COALESCE(sum(sales.quantity * sales.price), 0) AS prod_amt
+FROM products LEFT OUTER JOIN sales ON products.id = sales.pid
+GROUP BY products.id ORDER BY prod_amt DESC; 
+
+-- pc_Prod
+
 
 -- new temp for col header names
 CREATE TABLE pc_Prod_Limit (
@@ -122,11 +157,11 @@ CREATE TABLE pc_Prod_Limit (
 );
 
 INSERT INTO pc_Prod_Limit
-SELECT pc_StateProd.prod_id, products.name, SUM(pc_StateProd.st_prod_amt)
+SELECT pc_StateProd.prod_id, products.name, SUM(pc_StateProd.st_prod_amt) AS prod_amt
 FROM pc_StateProd, products
 WHERE pc_StateProd.prod_id = products.id
 GROUP BY pc_StateProd.prod_id, products.name -- sum over states
-ORDER BY sum DESC LIMIT 10;
+ORDER BY prod_amt DESC LIMIT 10;
 
 
 
