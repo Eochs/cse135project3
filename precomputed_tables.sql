@@ -11,6 +11,16 @@
 -- Create big table with all columns (at bottom of the lattice)
 -- users, products, amt
 
+-- test
+
+DROP TABLE IF EXISTS pc_Big;
+DROP TABLE IF EXISTS pc_StateProd;
+DROP TABLE IF EXISTS pc_UseCat;
+DROP TABLE IF EXISTS pc_StateCat;
+DROP TABLE IF EXISTS pc_Users;
+DROP TABLE IF EXISTS pc_Prod;
+DROP TABLE IF EXISTS pc_All;
+
 CREATE TABLE pc_Big (
   uid INT, --id of user
   pid INT, -- id of product
