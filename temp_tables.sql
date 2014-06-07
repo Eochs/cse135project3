@@ -84,9 +84,8 @@ DROP TABLE IF EXISTS temp3;
 CREATE TABLE temp3 (t_rank SERIAL PRIMARY KEY, sid INT, pid INT); INSERT INTO temp3(sid, pid) select t1.sid, t2.pid from temp1 as t1, temp2 as t2;
 
 select t3.t_rank, t3.sid, t3.pid, coalesce(pc_StateCatAmt.total,0) as total
-from temp3 as t3 join states on t3.sid = states.id
-left outer join pc_StateProdAmt on states.name = pc_StateProdAmt.state
-AND t3.pid = pc_StateProdAmt.pid
+from products join temp3 as t3 on products.id = t3.pid 
+left outer join pc_StateCatAmt on products.cid = pc_StateCatAmt.cid and pc_StateCatAmt.cid = ?
 order by t3.t_rank;
 
 

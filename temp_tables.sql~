@@ -76,7 +76,7 @@ INSERT INTO temp1(sid) select states.id from states, products, pc_StateCatAmt as
 
 DROP TABLE IF EXISTS temp2; 
 CREATE TABLE temp2 (p_Rank SERIAL PRIMARY KEY, pid INT); 
-INSERT INTO temp2(sid) select psca.pid from products, pc_StateCatAmt as psca 
+INSERT INTO temp2(pid) select products.pid from products, pc_StateCatAmt as psca 
                        WHERE products.cid = psca.cid AND psca.cid = ?
                        order by psca.total desc limit 10; 
 
