@@ -1,24 +1,4 @@
 
--- Spencer's fantastic new table for faster queries
-----------------------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS pc_UserStateProdCatAmt;
-CREATE TABLE pc_UserStateProdCatAmt (
-	uid	INT,
-        state   TEXT,
-	pid	INT,
-        cid     INT,
-	total	INT
-);
-
-INSERT INTO pc_UserStateProdCatAmt 
-SELECT users.id, users.state, products.id, products.cid, SUM(sales.quantity*sales.price) 
-FROM sales, users, products 
-WHERE sales.uid = users.id AND sales.pid = products.id
-GROUP BY users.id, state, products.id, products.cid;
-
-----------------------------------------------------------------------------------------
-
 DROP TABLE pc_UsersAmt;
 CREATE TABLE pc_UsersAmt (
 	uid	INT,
