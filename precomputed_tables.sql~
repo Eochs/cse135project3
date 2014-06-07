@@ -66,15 +66,25 @@ GROUP BY users.state, products.id;
 -- users, categories
 CREATE TABLE pc_UseCat (
   uid INT,
+  name TEXT,
   cid INT,
   use_cat_amt INT
 );
-
+/*
 INSERT INTO pc_UseCat
 SELECT pc_Big.uid, products.cid, SUM(pc_Big.use_prod_amt)
 FROM products, pc_Big
 WHERE products.id = pc_Big.pid
 GROUP BY pc_Big.uid, products.cid;
+*/
+INSERT INTO pc_UseCat
+SELECT users.id, users.name, products.cid, 
+       COALESCE(sum(sales.quantity * sales.price), 0)
+((FROM users
+LEFT OUTER JOIN sales ON users.id = sales.uid)
+RIGHT OUTER JOIN products ON sales.pid = products.id)
+GROUP BY users.id, users.name, products.cid;
+
 
 -- state, categories
 CREATE TABLE pc_StateCat (
